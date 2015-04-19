@@ -39,24 +39,79 @@ def hello_monkey():
 def process_twilio():
     text = request.values.get('Body').lower().strip()
     if text == 'playlists':
+        session['new_song'] = False
         playlists = spotify.get_wejam_playlists()
-        message = ','.join(playlists)
-        message = 'Playlists: ' + message
-    elif text.startswith('tracks'):
-        playlist_name = text[7:]
+        if not playlists:
+            message = 'There are currently no playlists.'
+        else:
+            message = ','.join(playlists)
+            message = 'Playlists: ' + message
+    elif text.startswith('new'):
+        session['new_song'] = False
+        playlist_name = text[4:]
         try:
-            tracks = spotify.track_listing(playlist_name)
-            message = ''
-            for i, song in enumerate(tracks):
-                message += '{0}) {1}\n'.format(i + 1, song.title)
-            if len(message) >= 1600:
-                message = message[:1595] + '...'
+            spotify.create_playlist(playlist_name)
+            session['playlist'] = playlist_name
+            message = '{0} playlist created!'.format(playlist_name)
         except spotify.SpotifyException, e:
             message = str(e)
+    elif text.startswith('choose'):
+        session['new_song'] = False
+        playlist_name = text[7:]
+        if playlist_name in spotify.get_wejam_playlists():
+            session['playlist'] = playlist_name
+            message = 'Playlist successfully chosen!'
+        else:
+            message = 'Invalid playlist choice.'
+    elif session.get('new_song', False):
+        if text == '1' or text == '2' or text == '3':
+            song_id = session['song_ids'][int(text) - 1]
+            spotify.add_track(session['playlist'], song_id)
+            session['new_song'] = False
+            message = 'New song added to playlist!'
+        elif text == 'none':
+            session['new_song'] = False
+            message = 'Adding a song was canceled.'
+        else:
+            message = 'Invalid song choice.\
+                       Please type "1", "2", "3", or "none".'
+    elif text.startswith('add'):
+        if 'playlist' in session:
+            playlist_name = session['playlist']
+            query = text[4:]
+            search_results = spotify.search(query)
+            message = 'Please respond with the song # or none:\n'
+            song_ids = []
+            for i, song in enumerate(search_results):
+                song_ids.append(song.id)
+                message += '{0}) {1} by {2}\n'.format(i + 1,
+                                                      song.title,
+                                                      song.artist)
+            session['song_ids'] = song_ids
+            session['new_song'] = True
+        else:
+            message = 'Please use the "choose" command before "add".'
+    elif text.startswith('tracks'):
+        if 'playlist' in session:
+            playlist_name = session['playlist']
+            try:
+                tracks = spotify.track_listing(playlist_name)
+                message = ''
+                for i, song in enumerate(tracks):
+                    message += '{0}) {1}\n'.format(i + 1, song.title)
+                if len(message) >= 1600:
+                    message = message[:1595] + '...'
+            except spotify.SpotifyException, e:
+                message = str(e)
+        else:
+            message = 'Please use the "choose" command before "tracks".'
     else:
         message = "Unsupported command.  Valid commands are: "
-        for command in ['playlists', 'tracks [playlist name]']:
-            message += '"{0}"'.format(command)
+        for command in ['playlists', 'new [playlist name]',
+                        'choose [playlist name]', 'tracks',
+                        'add [song search query]']:
+            message += '"{0}", '.format(command)
+
     resp = twilio.twiml.Response()
     resp.sms(message)
     return str(resp)

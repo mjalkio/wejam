@@ -6,7 +6,7 @@ import spotipy.util as util
 
 # A dict of playlists currently in We Jam
 # key = playlist name, value = playlist id
-wejam_playlists = {'best of disney': '2dKLJaJTw0YC8U5Rd9GXKy'}
+wejam_playlists = {}
 
 
 class Song:
@@ -69,8 +69,9 @@ def track_listing(playlist_name):
         for artist in track['artists']:
             artists += artist['name'] + ', '
 
-        artists = artists[:-2]
-        track_list.append(Song(track['name'], artists))
+        artists = artists[:-2].encode('utf-8')
+        title = track['name'].encode('utf-8')
+        track_list.append(Song(title, artists))
 
     return track_list
 
@@ -84,9 +85,10 @@ def search(query):
         artists = ''
         for artist in track['artists']:
             artists += artist['name'] + ', '
-        artists = artists[:-2]
-        song_id = track['id']
-        search_results.append(Song(track['name'], artists, song_id))
+        artists = artists[:-2].encode('utf-8')
+        song_id = track['id'].encode('utf-8')
+        title = track['name'].encode('utf-8')
+        search_results.append(Song(title, artists, song_id))
 
     return search_results
 
@@ -100,4 +102,4 @@ def add_track(playlist_name, track_id):
 
     sp.user_playlist_add_tracks(SPOTIFY_USER_ID,
                                 wejam_playlists[playlist_name],
-                                track_id)
+                                ['spotify:track:' + track_id])
