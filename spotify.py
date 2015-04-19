@@ -3,10 +3,12 @@ from settings import (SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
 import spotipy
 from spotipy.client import SpotifyException
 import spotipy.util as util
+import pickle
 
 # A dict of playlists currently in We Jam
 # key = playlist name, value = playlist id
-wejam_playlists = {}
+with open('wejam_playlists.pickle', 'rb') as f:
+    wejam_playlists = pickle.load(f)
 
 
 class Song:
@@ -35,6 +37,18 @@ def get_wejam_playlists():
     return wejam_playlists.keys()
 
 
+def playlist_image(playlist_name):
+    sp = spotify()
+
+    response = sp.user_playlist(SPOTIFY_USER_ID,
+                                wejam_playlists[playlist_name],
+                                fields='images')
+    if len(response) >= 1:
+        return response[1]['url']
+    else:
+        return response[0]['url']
+
+
 def create_playlist(playlist_name):
     sp = spotify()
 
@@ -43,6 +57,8 @@ def create_playlist(playlist_name):
     if 'id' in response:
         playlist_id = response['id']
         wejam_playlists[playlist_name] = playlist_id
+        with open('wejam_playlists.pickle', 'wb') as f:
+            pickle.dump(wejam_playlists, f)
     else:
         raise SpotifyException(response['error']['status'],
                                'Could not create playlist.')
@@ -80,7 +96,7 @@ def search(query):
     sp = spotify()
     search_results = []
     response = sp.search(query, limit=3)
-    for i in range(3):
+    for i in range(min(3, len(response['tracks']['items']))):
         track = response['tracks']['items'][i]
         artists = ''
         for artist in track['artists']:
