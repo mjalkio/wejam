@@ -3,14 +3,20 @@
     "capabilities": [
         ""
     ],
-    "companyName": "michaelhwhite13@gmail.com",
+    "companyName": "MlM",
     "longName": "WeJam",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [
+            {
+                "file": "images/WeJamLogo (1).png",
+                "name": "logo",
+                "type": "png"
+            }
+        ]
     },
     "sdkVersion": "2",
-    "shortName": "WeJAm",
+    "shortName": "WeJam",
     "uuid": "7991944a-1780-4fd3-b8cc-5c7e676bb5df",
     "versionCode": 1,
     "versionLabel": "1.0",

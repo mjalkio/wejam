@@ -2,6 +2,8 @@
 
 static Window *window;
 static TextLayer *text_layer;
+static GBitmap *s_example_bitmap;
+static BitmapLayer *s_bitmap_layer;
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   text_layer_set_text(text_layer, "Vote Now!");
@@ -23,7 +25,7 @@ static void click_config_provider(void *context) {
 static void bt_handler(bool connected) {
   // Show current connection state
   if (connected) {
-    text_layer_set_text(text_layer, "Connected, Begin Rating Songs!");
+    text_layer_set_text(text_layer, "Connected, Enjoy the wonder of WeJam!");
   } else {
     text_layer_set_text(text_layer, "Disconnected. Check bluetooth connection!");
   }
@@ -32,13 +34,19 @@ static void bt_handler(bool connected) {
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
-
+  
+  //Logo
+  s_example_bitmap = gbitmap_create_with_resource(RESOURCE_ID_logo);
+  s_bitmap_layer = bitmap_layer_create(GRect(0, 35, 144, 110));
+  bitmap_layer_set_bitmap(s_bitmap_layer, s_example_bitmap);
+  
+  
   // Create output TextLayer
   text_layer = text_layer_create(GRect(0, 0, window_bounds.size.w, window_bounds.size.h));
   text_layer_set_text(text_layer, "Press a button");
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
-
+  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_bitmap_layer));
   // Show current connection state
   bt_handler(bluetooth_connection_service_peek());
 }
@@ -46,6 +54,8 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   // Destroy output TextLayer
   text_layer_destroy(text_layer);
+  bitmap_layer_destroy(s_bitmap_layer);
+  gbitmap_destroy(s_example_bitmap);
 }
 
 static void init(void) {
