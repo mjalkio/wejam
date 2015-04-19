@@ -10,9 +10,10 @@ wejam_playlists = {'best of disney': '2dKLJaJTw0YC8U5Rd9GXKy'}
 
 
 class Song:
-    def __init__(self, title, artist):
+    def __init__(self, title, artist, song_id=0):
         self.title = title
         self.artist = artist
+        self.id = song_id
 
 
 # Makes sure user is currently authenticated and returns Spotify object
@@ -72,6 +73,22 @@ def track_listing(playlist_name):
         track_list.append(Song(track['name'], artists))
 
     return track_list
+
+
+def search(query):
+    sp = spotify()
+    search_results = []
+    response = sp.search(query, limit=3)
+    for i in range(3):
+        track = response['tracks']['items'][i]
+        artists = ''
+        for artist in track['artists']:
+            artists += artist['name'] + ', '
+        artists = artists[:-2]
+        song_id = track['id']
+        search_results.append(Song(track['name'], artists, song_id))
+
+    return search_results
 
 
 def add_track(playlist_name, track_id):
